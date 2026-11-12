@@ -1,65 +1,91 @@
-# Wordfence CLI
+# Wordfence CLI (Community Offline Edition)
 
-> [!WARNING]
-> Wordfence CLI is no longer available for new Free or Premium licenses.
-> The Free version of WF-CLI will reach end-of-life on October 14th, 2026. Existing Free licenses will cease to be valid on that date and the Free version will no longer be supported.
-> Existing Wordfence CLI Premium licenses will remain active and supported until their current license term expires. Premium licenses will not be renewed after expiration, and no new Premium licenses will be issued going forward.
-> Current Premium customers may continue to access support, documentation, and applicable downloads through the end of their active license term.
+> [!NOTE]
+> 본 레포지토리는 공식 Wordfence CLI가 EOL(신규 무료/유료 라이선스 발급 중단)됨에 따라, **외부 중앙 API 키 인증 없이 오프라인 환경에서 로컬 룰셋 및 공개 YARA 웹셸 시그니처를 기반으로 스캔할 수 있도록 커스터마이즈된 버전**입니다.
 
- Wordfence CLI is an open source, high performance, multi-process security scanner, written in Python, that quickly scans network filesystems to detect PHP/other malware and WordPress vulnerabilities. CLI is parallelizable, can be scheduled, can accept input via pipe, and can pipe output to other commands.
+Wordfence CLI는 Python 기반의 고성능 멀티프로세스 파일 스캐너로, 대용량 파일 시스템을 병렬로 탐색하며 `libpcre` 엔진을 활용해 PHP 웹셸, 백도어 및 악성코드를 초고속으로 검사합니다.
 
-## Installation
+---
 
-We have a number of installation methods to install Wordfence CLI in our [installation documentation](docs/Installation.md) which we'd recommend reviewing to get you scanning for malware in as few steps as possible. 
+## 🛠 커스터마이즈 내역 (Custom Modifications)
 
-We recommend installing using `pip`:
+1. **라이선스 및 약관 동의 완전 우회 (Bypass)**:
+   - 외부 중앙 서버(`noc1.wordfence.com`)에 API Key 검증을 요청하는 과정을 바이패스하여 라이선스 키 없이도 즉시 동작합니다.
+   - 초기 실행 시 대화형 설정 프롬프트(`wordfence configure`) 없이 바로 스캔 명령어를 실행할 수 있습니다.
+2. **로컬 시그니처 주입 지원 (`--signatures-file`)**:
+   - `malware-scan` 하위 명령어에 `--signatures-file <path_to_json>` 옵션이 추가되었습니다.
+   - 외부 다운로드 없이 사용자가 지정한 로컬 JSON 룰셋을 로드하여 고속 PCRE 엔진으로 스캔합니다.
+3. **YARA 룰셋 자동 변환 도구 제공 (`convert_yara_to_rules.py`)**:
+   - 보안 커뮤니티의 오픈소스 YARA 웹셸 룰셋(`.yar`)을 Wordfence CLI 호환 JSON 시그니처로 파싱/변환해 주는 스크립트를 기본 내장합니다.
+4. **기본 룰셋 번들 제공**:
+   - `rules_sample.json`: 대표적인 PHP 난독화 eval, system/exec 웹셸 룰셋
+   - `rules_yara.json`: Florian Roth의 `thor-webshells.yar` 기반 622개 웹셸 탐지 룰셋
+   - `rules_all.json`: 기본 샘플과 YARA 룰을 합친 625개 통합 웹셸 룰셋
 
-	pip install wordfence
+---
 
-If you'd like to install Wordfence CLI manually or use CLI for development, you can clone the GitHub repo to your local environment:
+## 🚀 빠른 시작 (Quick Start)
 
-	git clone git@github.com:wordfence/wordfence-cli.git
-	cd ./wordfence-cli
-	pip install .
-	python main.py version
-
-### Requirements
-
+### 1. 요구 사항
 - Python >= 3.8
-- The C library `libpcre` >= 8.38
-- Python packages:
-	- `packaging` >= 21.0 
-	- `requests` >= 2.3
-	- `mysql-connector-python` >= 8.0
+- `libpcre` C 라이브러리 >= 8.38
+- 필수 패키지 설치:
+  ```bash
+  pip install -r requirements.txt # 또는 pip install .
+  ```
 
-## Usage
+### 2. 악성코드 검사 실행
+기본 탑재된 통합 룰셋(`rules_all.json`)을 사용해 원하는 디렉터리를 스캔합니다:
 
-You can run `wordfence help` for a full list of options that can be passed to Wordfence CLI. Read more about the [configuration options](docs/Configuration.md) that can be passed to Wordfence CLI.
+```bash
+# 디렉터리 스캔 (결과 실시간 출력)
+python3 main.py malware-scan --signatures-file rules_all.json --output-format human /var/www
 
-#### Scanning a directory for malware
+# 감염 의심 파일 결과를 CSV 파일로 저장
+python3 main.py malware-scan --signatures-file rules_all.json --output-path /tmp/scan_results.csv --output-format csv /var/www
 
-Recursively scanning the `/var/www` directory for malware:
+# 모든 확장자의 파일 검사 (-a, --include-all-files)
+python3 main.py malware-scan -a --signatures-file rules_all.json /var/www
+```
 
-	wordfence malware-scan /var/www
+---
 
-A [full list of examples for the malware scan](docs/malware-scan/Examples.md) is included in our documentation.
+## 🔍 YARA 룰셋 변환 및 커스텀 룰 관리 (`convert_yara_to_rules.py`)
 
-#### Scanning a WordPress installation for vulnerabilities
+기존에 사용 중이던 YARA 웹셸 룰셋이나 최신 공개 룰셋을 손쉽게 Wordfence CLI 규격으로 변환할 수 있습니다.
 
-Scanning the `/var/www/wordpress` directory for vulnerabilities. 
+### 1. 최신 공개 웹셸 룰 자동 다운로드 & 변환
+```bash
+python3 convert_yara_to_rules.py --download-thor rules_yara.json
+```
 
-	wordfence vuln-scan /var/www/wordpress
+### 2. 보유 중인 로컬 `.yar` 파일 변환
+```bash
+python3 convert_yara_to_rules.py /path/to/my_webshell.yar my_custom_rules.json
+```
 
-A [full list of examples for the vulnerability scan](docs/vuln-scan/Examples.md) is included in our documentation.
+### 3. 직접 커스텀 룰 작성 (`rules_sample.json` 구조)
+JSON 파일에 아래와 같이 정규식 패턴을 직접 등록하여 검사할 수도 있습니다:
 
-## Documentation
+```json
+[
+  {
+    "id": 10001,
+    "name": "PHP.Webshell.EvalBase64",
+    "description": "난독화된 eval(base64_decode) 탐지",
+    "regex": "(?:eval|assert)\\s*\\(\\s*(?:base64_decode|gzinflate|gzuncompress|str_rot13)"
+  },
+  {
+    "id": 10002,
+    "name": "PHP.Webshell.DangerousSystemExec",
+    "description": "외부 입력값 직접 실행 탐지",
+    "regex": "(?:system|shell_exec|passthru|exec|popen|proc_open)\\s*\\(\\s*\\$_(?:GET|POST|REQUEST|COOKIE)"
+  }
+]
+```
 
-The full documentation for Wordfence CLI can be found [here](docs/) which includes installation instructions, configuration options, detailed examples, and frequently asked questions.
+---
 
-## License
+## 📖 라이선스 (License)
 
-Wordfence CLI is open source, licensed under GPLv3. The license can be found [here](LICENSE).
-
-## Contributing
-
-See [our contribution guidelines](CONTRIBUTING.md).
+Wordfence CLI 원본 엔진은 **GPLv3** 라이선스 하에 배포됩니다. 상세 라이선스는 [LICENSE](LICENSE) 파일을 참조하세요.
