@@ -1,7 +1,7 @@
 # Wordfence CLI (Community Offline Edition)
 
 > [!NOTE]
-> 본 레포지토리는 공식 Wordfence CLI가 EOL(신규 무료/유료 라이선스 발급 중단)됨에 따라, **외부 중앙 API 키 인증 없이 오프라인 환경에서 로컬 룰셋 및 공개 YARA 웹셸 시그니처를 기반으로 스캔할 수 있도록 커스터마이즈된 버전**입니다.
+> 본 레포지토리는 공식 [Wordfence CLI](https://github.com/wordfence/wordfence-cli/)가 EOL(신규 무료/유료 라이선스 발급 중단)됨에 따라, **외부 중앙 API 키 인증 없이 오프라인 환경에서 로컬 룰셋 및 공개 YARA 웹셸 시그니처를 기반으로 스캔할 수 있도록 커스터마이즈된 버전**입니다.
 
 Wordfence CLI는 Python 기반의 고성능 멀티프로세스 파일 스캐너로, 대용량 파일 시스템을 병렬로 탐색하며 `libpcre` 엔진을 활용해 PHP 웹셸, 백도어 및 악성코드를 초고속으로 검사합니다.
 
@@ -48,11 +48,26 @@ python3 main.py malware-scan --signatures-file rules_all.json --output-path /tmp
 python3 main.py malware-scan -a --signatures-file rules_all.json /var/www
 ```
 
+> [!TIP]
+> **오탐(False Positive) 방지 및 빠른 진단 팁**:
+> `rules_all.json`에는 광범위한 YARA 룰이 포함되어 있어 정상 프레임워크나 워드프레스 코어 파일 등에서 검색 결과가 과도하게 많이 나올 수 있습니다.
+> 명확하고 핵심적인 웹셸/난독화 패턴만 빠르게 스캔하려면 먼저 **`rules_sample.json`**을 지정하여 실행해 보시는 것을 권장합니다:
+> ```bash
+> # 핵심 웹셸 패턴만 정밀 스캔 (추천)
+> python3 main.py malware-scan --signatures-file rules_sample.json --output-format human /var/www
+> ```
+
+
 ---
 
 ## 🔍 YARA 룰셋 변환 및 커스텀 룰 관리 (`convert_yara_to_rules.py`)
 
 기존에 사용 중이던 YARA 웹셸 룰셋이나 최신 공개 룰셋을 손쉽게 Wordfence CLI 규격으로 변환할 수 있습니다.
+
+> [!NOTE]
+> **공개 YARA 룰셋 다운로드 참고**:
+> 웹셸 및 악성코드 시그니처 원본 파일들은 [Neo23x0/signature-base YARA 저장소](https://github.com/Neo23x0/signature-base/tree/master/yara)에서 다운로드하여 사용할 수 있습니다.
+> 웹 서버 환경에서는 주로 `thor-webshells.yar`, `gen_webshells.yar`, `apt_webshell_chinachopper.yar` 등이 참조됩니다.
 
 ### 1. 최신 공개 웹셸 룰 자동 다운로드 & 변환
 ```bash
