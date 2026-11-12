@@ -117,7 +117,42 @@ class Client(NocClient):
         self.validate_response(patterns, validator)
         return patterns
 
-    def get_malware_signatures(self) -> SignatureSet:
+    def get_malware_signatures(self, signatures_file: Optional[str] = None) -> SignatureSet:
+        import os
+        import json
+        if signatures_file is not None and os.path.exists(signatures_file):
+            with open(signatures_file, 'r', encoding='utf-8') as f:
+                raw_rules = json.load(f)
+            common_strings = []
+            signatures = {}
+            for item in raw_rules:
+                sig_id = item['id']
+                name = item.get('name', f'Custom_Rule_{sig_id}')
+                desc = item.get('description', '')
+                regex = item['regex']
+                cstrings = item.get('common_strings', [])
+                assigned_indices = []
+                for cs in cstrings:
+                    found_idx = None
+                    for idx, existing in enumerate(common_strings):
+                        if existing.string == cs:
+                            found_idx = idx
+                            break
+                    if found_idx is None:
+                        found_idx = len(common_strings)
+                        common_strings.append(CommonString(cs))
+                    assigned_indices.append(found_idx)
+                    common_strings[found_idx].signature_ids.append(sig_id)
+
+                signatures[sig_id] = Signature(
+                    identifier=sig_id,
+                    rule=regex,
+                    name=name,
+                    description=desc,
+                    common_strings=assigned_indices
+                )
+            return SignatureSet(common_strings, signatures, self.license)
+
         patterns = self.get_patterns()
         common_strings = []
         signatures = {}

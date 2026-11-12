@@ -174,17 +174,6 @@ class Configurer:
         return self.subcommand_definition.accepts_option(name)
 
     def has_base_config(self) -> bool:
-        if self.config.license is None:
-            return False
-        try:
-            ensure_directory_is_writable(self.config.cache_directory)
-        except IoException:
-            log.warning(
-                    f'Cache directory at {self.config.cache_directory} does'
-                    'not appear to be writable. Please correct the permissions'
-                    ' or specify an alternate path for the cache.'
-                )
-            return False
         return True
 
     def _prompt_overwrite(self) -> bool:

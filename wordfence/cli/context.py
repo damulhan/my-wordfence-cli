@@ -104,8 +104,9 @@ class CliContext:
         self._license_update_hooks.append(callable)
 
     def get_license(self, check: bool = True) -> Optional[License]:
-        if self._license is None and self.config.license is not None:
-            license = License(self.config.license)
+        if self._license is None:
+            raw_license = self.config.license or 'COMMUNITY-EDITION'
+            license = License(raw_license)
             if check and self.license_manager is not None:
                 license = self.license_manager.check_license(license)
             self._license = license

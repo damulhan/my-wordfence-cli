@@ -1,0 +1,23 @@
+[
+  {
+    "id": 10001,
+    "name": "PHP.Webshell.EvalBase64",
+    "description": "Detects eval base64_decode execution typical in PHP webshells",
+    "regex": "(?:eval|assert)\\s*\\(\\s*(?:base64_decode|gzinflate|gzuncompress|str_rot13)",
+    "common_strings": []
+  },
+  {
+    "id": 10002,
+    "name": "PHP.Webshell.DangerousSystemExec",
+    "description": "Detects system execution from request parameters",
+    "regex": "(?:system|shell_exec|passthru|exec|popen|proc_open)\\s*\\(\\s*\\$_(?:GET|POST|REQUEST|COOKIE)",
+    "common_strings": []
+  },
+  {
+    "id": 10003,
+    "name": "PHP.Backdoor.FilesMan",
+    "description": "Detects common WSO / FilesMan webshell signature",
+    "regex": "(?:WSOsetcookie|FilesMan|Files_Tools)",
+    "common_strings": []
+  }
+]

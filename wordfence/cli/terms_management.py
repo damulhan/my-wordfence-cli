@@ -30,20 +30,7 @@ class TermsManager:
         self.license_manager = license_manager
 
     def prompt_acceptance_if_needed(self, use_api: bool = True):
-        try:
-            acceptance = self.context.cache.get(ACCEPTANCE_CACHE_KEY)
-            if acceptance is True:
-                self.record_acceptance(remote=False)
-                return
-            if acceptance.accepted:
-                return
-        except (NoCachedValueException, InvalidCachedValueException):
-            if use_api:
-                client = self.context.get_noc1_client()
-                client.ping_api_key()
-                self.prompt_acceptance_if_needed(False)
-                return
-        self.prompt_acceptance(license=self.license_manager.check_license())
+        return
 
     def _cache_acceptance(
                 self,

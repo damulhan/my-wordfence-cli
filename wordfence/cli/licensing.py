@@ -31,21 +31,9 @@ class LicenseManager:
         return self.context.create_noc1_client(license)
 
     def validate_license(self, license: Union[License, str]) -> License:
-        license = to_license(license)
-        client = self.context.create_noc1_client(license)
-        try:
-            if not client.ping_api_key():
-                raise LicenseValidationFailure('Invalid license')
-        except ApiException as exception:
-            if exception.public_message is None:
-                raise LicenseValidationFailure(
-                        'License validation failed.'
-                    )
-            else:
-                raise LicenseValidationFailure(
-                        f'Invalid license: {exception.public_message}'
-                    )
-        return license
+        if license is None:
+            license = 'COMMUNITY-EDITION'
+        return to_license(license)
 
     def set_license(self, license: Union[License, str]) -> str:
         license = to_license(license)
